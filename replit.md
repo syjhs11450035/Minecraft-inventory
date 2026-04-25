@@ -1,5 +1,9 @@
 # Workspace
 
+## Quick Access
+
+- **快速查看**: https://88258c72-76c6-49a1-87fb-de8030c96b06-00-h5dfpgzc98cc.riker.replit.dev/
+
 ## Overview
 
 Minecraft AI bot inventory manager. A mineflayer-based bot connects to a Minecraft server, opens chests / barrels / ender chests, parses any shulker boxes inside, and stores everything in PostgreSQL. A Streamlit web UI (Simplified Chinese) shows the aggregated total in **箱 - 组 - 个** (boxes / stacks / individual items) format.
