@@ -3,6 +3,7 @@ import { db, containerSnapshots, snapshotItems } from "@workspace/db";
 import { eq, desc, sql } from "drizzle-orm";
 import { getBot, getBotState, openNearbyChest } from "../lib/bot";
 import { parseSlotsToItems } from "../lib/inventory-parser";
+import { logEvent } from "../lib/event-log";
 
 const router: IRouter = Router();
 
@@ -46,8 +47,10 @@ router.post("/snapshots/inventory", async (req, res) => {
       );
     }
 
+    logEvent("info", `背包快照 #${snap.id} 已建立（${items.length} 笔物品）`);
     res.json({ ok: true, snapshot: snap, itemCount: items.length });
   } catch (err: any) {
+    logEvent("error", `背包快照失败：${err.message}`);
     res.status(500).json({ error: err.message });
   }
 });
@@ -110,6 +113,10 @@ router.post("/snapshots/chest", async (req, res) => {
       );
     }
 
+    logEvent(
+      "info",
+      `容器快照 #${snap.id}：${target.name} @ (${target.x},${target.y},${target.z}) — ${items.length} 笔物品`,
+    );
     res.json({
       ok: true,
       snapshot: snap,
@@ -117,6 +124,7 @@ router.post("/snapshots/chest", async (req, res) => {
       itemCount: items.length,
     });
   } catch (err: any) {
+    logEvent("error", `开启箱子失败：${err.message}`);
     res.status(500).json({ error: err.message });
   } finally {
     try {
@@ -164,6 +172,7 @@ router.delete("/snapshots/:id", async (req, res) => {
     return;
   }
   await db.delete(containerSnapshots).where(eq(containerSnapshots.id, id));
+  logEvent("system", `已删除快照 #${id}`);
   res.json({ ok: true });
 });
 

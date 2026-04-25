@@ -1,5 +1,6 @@
 import mineflayer from "mineflayer";
 import { logger } from "./logger";
+import { logEvent } from "./event-log";
 
 export type BotStatus =
   | "disconnected"
@@ -60,6 +61,7 @@ export async function connectBot(cfg: BotConfig): Promise<void> {
   state.status = "connecting";
   state.message = `正在连线到 ${cfg.host}:${cfg.port}…`;
   state.config = cfg;
+  logEvent("system", `尝试连线 ${cfg.host}:${cfg.port}（账号 ${cfg.username}, ${cfg.auth || "offline"}）`);
 
   return new Promise((resolve, reject) => {
     let resolved = false;
@@ -82,6 +84,7 @@ export async function connectBot(cfg: BotConfig): Promise<void> {
         state.status = "spawned";
         state.message = "已上线，等待指令";
         state.spawnedAt = Date.now();
+        logEvent("info", `机器人已出生于游戏世界`);
         if (bot.entity?.position) {
           state.position = {
             x: Math.floor(bot.entity.position.x),
@@ -102,6 +105,12 @@ export async function connectBot(cfg: BotConfig): Promise<void> {
       bot.on("login", () => {
         state.status = "connected";
         state.message = "已登录，等待出生点…";
+        logEvent("info", "已登录服务器");
+      });
+
+      bot.on("messagestr", (message: string) => {
+        const text = String(message || "").slice(0, 500);
+        if (text.trim()) logEvent("chat", text);
       });
 
       bot.on("health", () => {
@@ -125,6 +134,7 @@ export async function connectBot(cfg: BotConfig): Promise<void> {
         state.message = `被服务器踢出：${reason}`;
         state.bot = null;
         logger.warn({ reason }, "bot kicked");
+        logEvent("error", `被服务器踢出：${reason}`);
         if (!resolved) {
           resolved = true;
           reject(new Error(`被踢出：${reason}`));
@@ -135,6 +145,7 @@ export async function connectBot(cfg: BotConfig): Promise<void> {
         state.status = "error";
         state.message = `错误：${err.message}`;
         logger.error({ err }, "bot error");
+        logEvent("error", `连线错误：${err.message}`);
         if (!resolved) {
           resolved = true;
           reject(err);
@@ -149,6 +160,7 @@ export async function connectBot(cfg: BotConfig): Promise<void> {
         state.bot = null;
         state.spawnedAt = null;
         logger.info({ reason }, "bot ended");
+        logEvent("system", `连线结束：${reason || "(未知原因)"}`);
       });
 
       setTimeout(() => {
@@ -173,6 +185,7 @@ export async function disconnectBot(): Promise<void> {
       // ignore
     }
     state.bot = null;
+    logEvent("system", "用户主动离线");
   }
   state.status = "disconnected";
   state.message = "已离线";
@@ -182,6 +195,7 @@ export async function disconnectBot(): Promise<void> {
 export async function sendChat(message: string): Promise<void> {
   if (!state.bot) throw new Error("机器人未上线");
   state.bot.chat(message);
+  logEvent("chat", `[我] ${message}`);
 }
 
 export async function findNearbyChest(

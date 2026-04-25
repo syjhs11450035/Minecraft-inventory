@@ -8,6 +8,7 @@ import {
   sendChat,
   findNearbyChest,
 } from "../lib/bot";
+import { getEvents, clearEvents } from "../lib/event-log";
 
 const router: IRouter = Router();
 
@@ -67,6 +68,16 @@ router.get("/bot/nearby-chest", async (req, res) => {
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }
+});
+
+router.get("/bot/logs", (req, res) => {
+  const limit = Math.min(300, Math.max(1, Number(req.query.limit ?? 200) || 200));
+  res.json({ entries: getEvents(limit) });
+});
+
+router.delete("/bot/logs", (_req, res) => {
+  clearEvents();
+  res.json({ ok: true });
 });
 
 router.get("/bot/inventory-preview", async (_req, res) => {
