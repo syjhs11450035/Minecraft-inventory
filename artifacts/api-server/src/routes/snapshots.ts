@@ -14,6 +14,11 @@ router.post("/snapshots/inventory", async (req, res) => {
     return;
   }
   const label = String(req.body?.label ?? "机器人主背包");
+  const areaIdRaw = req.body?.areaId;
+  const areaId =
+    areaIdRaw === null || areaIdRaw === undefined || areaIdRaw === ""
+      ? null
+      : Number(areaIdRaw);
   const state = getBotState();
 
   try {
@@ -30,6 +35,7 @@ router.post("/snapshots/inventory", async (req, res) => {
         x: state.position?.x ?? null,
         y: state.position?.y ?? null,
         z: state.position?.z ?? null,
+        areaId: Number.isInteger(areaId) ? areaId : null,
       })
       .returning();
 
@@ -67,6 +73,11 @@ router.post("/snapshots/chest", async (req, res) => {
     32,
     Math.max(1, Number(req.body?.range ?? 6) || 6),
   );
+  const areaIdRaw = req.body?.areaId;
+  const areaId =
+    areaIdRaw === null || areaIdRaw === undefined || areaIdRaw === ""
+      ? null
+      : Number(areaIdRaw);
   const state = getBotState();
 
   let opened: any = null;
@@ -96,6 +107,7 @@ router.post("/snapshots/chest", async (req, res) => {
         y: target.y,
         z: target.z,
         notes: target.name,
+        areaId: Number.isInteger(areaId) ? areaId : null,
       })
       .returning();
 
@@ -136,12 +148,32 @@ router.post("/snapshots/chest", async (req, res) => {
 });
 
 router.get("/snapshots", async (_req, res) => {
-  const rows = await db
-    .select()
-    .from(containerSnapshots)
-    .orderBy(desc(containerSnapshots.takenAt))
-    .limit(200);
-  res.json({ snapshots: rows });
+  const result = await db.execute(sql`
+    SELECT
+      s.id, s.taken_at, s.source_type, s.source_key, s.label,
+      s.dimension, s.x, s.y, s.z, s.notes, s.area_id,
+      a.name AS area_name
+    FROM container_snapshots s
+    LEFT JOIN chest_areas a ON a.id = s.area_id
+    ORDER BY s.taken_at DESC
+    LIMIT 200
+  `);
+  res.json({
+    snapshots: (result.rows as any[]).map((r) => ({
+      id: r.id,
+      takenAt: r.taken_at,
+      sourceType: r.source_type,
+      sourceKey: r.source_key,
+      label: r.label,
+      dimension: r.dimension,
+      x: r.x,
+      y: r.y,
+      z: r.z,
+      notes: r.notes,
+      areaId: r.area_id,
+      areaName: r.area_name,
+    })),
+  });
 });
 
 router.get("/snapshots/:id", async (req, res) => {

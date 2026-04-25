@@ -7,6 +7,14 @@ import {
   boolean,
 } from "drizzle-orm/pg-core";
 
+export const chestAreas = pgTable("chest_areas", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  color: text("color"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const containerSnapshots = pgTable("container_snapshots", {
   id: serial("id").primaryKey(),
   takenAt: timestamp("taken_at", { withTimezone: true }).defaultNow().notNull(),
@@ -18,6 +26,9 @@ export const containerSnapshots = pgTable("container_snapshots", {
   y: integer("y"),
   z: integer("z"),
   notes: text("notes"),
+  areaId: integer("area_id").references(() => chestAreas.id, {
+    onDelete: "set null",
+  }),
 });
 
 export const snapshotItems = pgTable("snapshot_items", {
@@ -46,6 +57,7 @@ export const botState = pgTable("bot_state", {
     .notNull(),
 });
 
+export type ChestArea = typeof chestAreas.$inferSelect;
 export type ContainerSnapshot = typeof containerSnapshots.$inferSelect;
 export type SnapshotItem = typeof snapshotItems.$inferSelect;
 export type BotStateRow = typeof botState.$inferSelect;
