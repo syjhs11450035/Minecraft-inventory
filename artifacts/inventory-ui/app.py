@@ -39,8 +39,6 @@ ITEM_ICONS = {
     "wooden_pickaxe": "⛏️", "golden_pickaxe": "⛏️", "netherite_pickaxe": "⛏️",
     "diamond_axe": "🪓", "iron_axe": "🪓", "stone_axe": "🪓",
     "wooden_axe": "🪓", "golden_axe": "🪓", "netherite_axe": "🪓",
-    "diamond_shovel": "🥄", "iron_shovel": "🥄",
-    "diamond_hoe": "🔨", "iron_hoe": "🔨",
     "bow": "🏹", "crossbow": "🏹", "arrow": "➡️", "spectral_arrow": "✨",
     "shield": "🛡️", "totem_of_undying": "🌟",
     "ender_pearl": "🟣", "ender_eye": "👁️", "ender_chest": "📦",
@@ -48,12 +46,6 @@ ITEM_ICONS = {
     "tnt": "💣", "fire_charge": "🔥", "flint_and_steel": "🔥",
     "torch": "🔦", "lantern": "🏮", "soul_torch": "🔵",
     "chest": "📦", "trapped_chest": "📦", "barrel": "🛢️", "shulker_box": "📦",
-    "white_shulker_box": "⬜", "orange_shulker_box": "🟧", "magenta_shulker_box": "🟪",
-    "light_blue_shulker_box": "🟦", "yellow_shulker_box": "🟨", "lime_shulker_box": "🟩",
-    "pink_shulker_box": "🩷", "gray_shulker_box": "⬛", "light_gray_shulker_box": "⬜",
-    "cyan_shulker_box": "🟦", "purple_shulker_box": "🟣", "blue_shulker_box": "🟦",
-    "brown_shulker_box": "🟫", "green_shulker_box": "🟩", "red_shulker_box": "🟥",
-    "black_shulker_box": "⬛",
     "elytra": "🪽", "trident": "🔱", "nautilus_shell": "🐚",
     "name_tag": "🏷️", "lead": "🪢", "compass": "🧭", "clock": "🕐",
     "map": "🗺️", "filled_map": "🗺️",
@@ -63,14 +55,12 @@ ITEM_ICONS = {
     "spawner": "🥚", "beacon": "💡", "conduit": "💡",
     "blaze_rod": "🔥", "blaze_powder": "🟡", "ghast_tear": "💧",
     "nether_star": "⭐", "dragon_egg": "🥚", "dragon_breath": "🌬️",
-    "wither_skeleton_skull": "💀", "skeleton_skull": "💀",
     "egg": "🥚", "snowball": "❄️", "ice": "🧊", "packed_ice": "🧊",
     "obsidian": "🟪", "crying_obsidian": "🟪", "bedrock": "⬛",
-    "string": "🧵", "feather": "🪶", "leather": "🟫", "rabbit_hide": "🟫",
+    "string": "🧵", "feather": "🪶", "leather": "🟫",
     "iron_nugget": "🔘", "gold_nugget": "🔘",
     "saddle": "🐎", "carrot_on_a_stick": "🥕",
-    "fishing_rod": "🎣", "cod": "🐟", "salmon": "🐟", "tropical_fish": "🐠",
-    "pufferfish": "🐡",
+    "fishing_rod": "🎣", "cod": "🐟", "salmon": "🐟",
 }
 
 DEFAULT_ICON = "🔹"
@@ -98,7 +88,7 @@ def icon_for(item_name: str) -> str:
 
 # ----------------- 页面设定 -----------------
 st.set_page_config(
-    page_title="AI-Bot Minecraft 库存控制台",
+    page_title="AI-Bot 库存控制台",
     page_icon="🤖",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -109,7 +99,6 @@ st.markdown(
     <style>
         section[data-testid="stSidebar"] { background: #0f1419; }
         section[data-testid="stSidebar"] * { color: #e6edf3; }
-        h1, h2, h3 { color: #1f2937; }
         .status-pill {
             display: inline-block; padding: 4px 12px; border-radius: 999px;
             font-weight: 600; font-size: 0.95rem;
@@ -120,17 +109,20 @@ st.markdown(
         .status-error   { background: #dc2626; color: white; }
         .stat-card {
             background: linear-gradient(135deg, #1e3a8a, #3b82f6);
-            color: white; padding: 16px; border-radius: 12px; text-align:center;
+            color: white; padding: 14px; border-radius: 12px; text-align:center;
+            margin-bottom: 8px;
         }
-        .stat-card .label { font-size: 0.8rem; opacity: 0.8; }
+        .stat-card .label { font-size: 0.8rem; opacity: 0.85; }
         .stat-card .value { font-size: 1.6rem; font-weight: 700; margin-top: 4px;}
+        /* 隐藏 streamlit 标头空白 */
+        .block-container { padding-top: 1.2rem; }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
 
-# ----------------- API helpers -----------------
+# ----------------- API -----------------
 def api_get(path: str, **kwargs) -> dict[str, Any]:
     try:
         r = requests.get(f"{API_BASE}{path}", timeout=15, **kwargs)
@@ -181,6 +173,15 @@ def api_delete(path: str) -> dict[str, Any]:
 
 
 # ----------------- 数学：箱-组-个 -----------------
+def split_box_stack_single(count: int, stack_size: int) -> tuple[int, int, int]:
+    per_box = stack_size * 27
+    boxes = count // per_box
+    rem = count - boxes * per_box
+    stacks = rem // stack_size
+    singles = rem - stacks * stack_size
+    return boxes, stacks, singles
+
+
 def fmt_box_stack_single(boxes: int, stacks: int, singles: int) -> str:
     parts = []
     if boxes > 0:
@@ -192,16 +193,7 @@ def fmt_box_stack_single(boxes: int, stacks: int, singles: int) -> str:
     return " - ".join(parts)
 
 
-def split_box_stack_single(count: int, stack_size: int) -> tuple[int, int, int]:
-    per_box = stack_size * 27
-    boxes = count // per_box
-    rem = count - boxes * per_box
-    stacks = rem // stack_size
-    singles = rem - stacks * stack_size
-    return boxes, stacks, singles
-
-
-# ----------------- 状态 -----------------
+# ----------------- 状态 pill -----------------
 def status_pill(status: dict) -> str:
     s = status.get("status", "disconnected")
     if s == "spawned":
@@ -222,7 +214,6 @@ def fetch_areas() -> list[dict]:
 
 
 def area_select_options(areas: list[dict]) -> list[tuple[str, int | None]]:
-    """返回 [(显示名, area_id 或 None)]，含「其他 / 未分类」选项。"""
     opts: list[tuple[str, int | None]] = [("📁 其他（未分类）", None)]
     for a in areas:
         opts.append((f"📦 {a['name']}", a["id"]))
@@ -303,25 +294,30 @@ def dialog_scan_chest():
                 st.rerun()
 
 
-# ----------------- 侧边栏（精简版）-----------------
+# ----------------- 侧边栏 -----------------
 def render_sidebar(status: dict) -> bool:
     is_online = status.get("status") == "spawned"
 
     with st.sidebar:
-        st.title("🎮 机器人控制中心")
+        st.title("🎮 控制中心")
+
+        # 状态 pill
         st.markdown(status_pill(status), unsafe_allow_html=True)
+
+        # IP / 名称
+        host = st.session_state.get("host", "localhost")
+        port = st.session_state.get("port", 25565)
+        username = st.session_state.get("username", "InvBot")
+        st.caption(f"🌐 `{host}:{port}`")
+        st.caption(f"🤖 `{username}`")
+
         msg = status.get("message") or ""
         if msg:
             st.caption(msg)
 
-        # 显示当前生效的连线参数（只读，编辑请到「设定」分页）
-        host = st.session_state.get("host", "localhost")
-        port = st.session_state.get("port", 25565)
-        username = st.session_state.get("username", "InvBot")
-        st.caption(f"🌐 `{host}:{port}` 　🤖 `{username}`")
-
         st.divider()
 
+        # 连线 / 离线
         c1, c2 = st.columns(2)
         if c1.button("🚀 连线", use_container_width=True, disabled=is_online, type="primary"):
             payload = {
@@ -346,14 +342,14 @@ def render_sidebar(status: dict) -> bool:
             st.toast("已离线", icon="⚪")
             st.rerun()
 
-        # 机器人即时状态
+        # 在线状态摘要
         if is_online:
             with st.container(border=True):
                 p = status.get("position") or {}
                 if p:
                     st.markdown(
-                        f"**📍 维度** `{p.get('dimension', '—')}`\n\n"
-                        f"**X** `{p.get('x', 0)}` 　**Y** `{p.get('y', 0)}` 　**Z** `{p.get('z', 0)}`"
+                        f"**📍** `{p.get('dimension', '—')}`  "
+                        f"`{p.get('x', 0)},{p.get('y', 0)},{p.get('z', 0)}`"
                     )
                 health = status.get("health")
                 food = status.get("food")
@@ -364,152 +360,154 @@ def render_sidebar(status: dict) -> bool:
 
         st.divider()
 
-        st.subheader("⚙️ 运作模式")
+        # 模式
+        st.subheader("⚙️ 模式")
         st.radio(
-            "选择模式：",
-            ["📦 库存管理", "🤖 自动整理（开发中）"],
+            "模式：",
+            ["📦 库存管理"],
             label_visibility="collapsed",
-            help="目前仅启用「库存管理」；自动整理为后续扩充功能。",
         )
 
         st.divider()
-
-        auto_refresh = st.toggle(
-            "⏱️ 自动刷新（每 3 秒）",
-            value=st.session_state.get("auto_refresh", False),
-            help="机器人在线时持续刷新画面以同步最新状态。",
-        )
-        st.session_state.auto_refresh = auto_refresh
-
-        st.divider()
-
-        st.subheader("💬 快速指令")
-        with st.form("chat_form", clear_on_submit=True):
-            chat_msg = st.text_input(
-                "讯息 / 指令", placeholder="例：/home", label_visibility="collapsed"
-            )
-            sent = st.form_submit_button(
-                "📨 送出", use_container_width=True, disabled=not is_online
-            )
-            if sent and chat_msg.strip():
-                res = api_post("/bot/chat", {"message": chat_msg.strip()})
-                if res.get("_error"):
-                    st.error(res["_error"])
-                else:
-                    st.toast("讯息已送出", icon="📨")
-
         if st.button("🔄 手动刷新", use_container_width=True):
             st.rerun()
 
     return is_online
 
 
-# ----------------- Tab 1: 仓库 -----------------
-def tab_inventory(status: dict, is_online: bool, areas: list[dict]):
-    st.markdown("### 📦 仓库总览（箱 - 组 - 个）")
-    st.caption("汇总每个容器位置的最新快照，潜影盒会自动展开为内含物品。")
+# ----------------- Tab: 仓库 -----------------
+def tab_inventory(is_online: bool):
+    # 左主 / 右副 布局
+    left, right = st.columns([3, 1])
 
-    # 快速扫描按钮（开启对话框）
-    cc1, cc2, cc3, _ = st.columns([1, 1, 1, 3])
-    if cc1.button("📦 扫描背包", use_container_width=True, type="primary", disabled=not is_online):
-        dialog_scan_inventory()
-    if cc2.button("📥 扫描附近箱子", use_container_width=True, disabled=not is_online):
-        dialog_scan_chest()
-    if cc3.button("🔄 重整资料", use_container_width=True):
-        st.rerun()
+    # ---- 右侧：扫描 + 统计 ----
+    with right:
+        with st.container(border=True):
+            st.markdown("**🔧 操作**")
+            if st.button("📦 扫描背包", use_container_width=True, type="primary", disabled=not is_online):
+                dialog_scan_inventory()
+            if st.button("📥 扫描附近箱子", use_container_width=True, disabled=not is_online):
+                dialog_scan_chest()
+            if st.button("🔄 重整资料", use_container_width=True):
+                st.rerun()
 
-    if not is_online:
-        st.info("机器人尚未上线。可以先到「设定」分页填妥连线资讯，再回侧栏按【🚀 连线】。")
+        if not is_online:
+            st.info("机器人未上线，先到「设定」填妥连线参数。")
 
-    data = api_get("/inventory/aggregate")
-    if data.get("_error"):
-        st.error(data["_error"])
-        return
+    # ---- 左侧：表格 ----
+    with left:
+        data = api_get("/inventory/aggregate")
+        if data.get("_error"):
+            st.error(data["_error"])
+            return
 
-    items = data.get("items", [])
-    if not items:
-        st.info("还没有任何快照。请按上方【扫描背包】或【扫描附近箱子】开始建立资料。")
-        return
+        items = data.get("items", [])
 
-    total_items = sum(i["total"] for i in items)
-    total_kinds = len(items)
-    total_boxes = sum(i["boxes"] for i in items)
+        # 上方区域筛选
+        areas = fetch_areas()
+        f_opts: list[tuple[str, Any]] = [("🌐 全部区域", "__all__"), ("📁 其他（未分类）", None)]
+        for a in areas:
+            f_opts.append((f"📦 {a['name']}", a["id"]))
+        f_labels = [o[0] for o in f_opts]
+        sel = st.selectbox("筛选区域", range(len(f_labels)), format_func=lambda i: f_labels[i])
+        filter_val = f_opts[sel][1]
 
-    c1, c2, c3 = st.columns(3)
-    c1.markdown(
-        f'<div class="stat-card"><div class="label">物品种类</div><div class="value">{total_kinds}</div></div>',
-        unsafe_allow_html=True,
-    )
-    c2.markdown(
-        f'<div class="stat-card"><div class="label">物品总数</div><div class="value">{total_items:,}</div></div>',
-        unsafe_allow_html=True,
-    )
-    c3.markdown(
-        f'<div class="stat-card"><div class="label">等效满箱数</div><div class="value">{total_boxes}</div></div>',
-        unsafe_allow_html=True,
-    )
+        if filter_val != "__all__":
+            sn_data = api_get("/snapshots")
+            allowed_keys: set[str] = set()
+            for s in sn_data.get("snapshots", []):
+                if s.get("areaId") == filter_val:
+                    allowed_keys.add(s["sourceKey"])
+            items = [it for it in items if it.get("sourceKey") in allowed_keys]
 
-    st.markdown("&nbsp;")
-    search = st.text_input("🔎 搜寻物品（中文 / 英文 ID）", "")
+        search = st.text_input("🔎 搜寻物品（中文 / 英文 ID）", "")
 
-    rows = []
-    for it in items:
-        if (
-            search
-            and search.lower() not in it["displayName"].lower()
-            and search.lower() not in it["itemName"].lower()
-        ):
-            continue
-        rows.append(
-            {
-                "图标": icon_for(it["itemName"]),
-                "中文名": it["displayName"],
-                "ID": it["itemName"],
-                "数量": it["total"],
-                "箱-组-个": fmt_box_stack_single(it["boxes"], it["stacks"], it["singles"]),
-                "每组": it["stackSize"],
-            }
+        rows = []
+        for it in items:
+            if (
+                search
+                and search.lower() not in it["displayName"].lower()
+                and search.lower() not in it["itemName"].lower()
+            ):
+                continue
+            rows.append(
+                {
+                    "图片": icon_for(it["itemName"]),
+                    "名称": it["displayName"],
+                    "箱数": it["boxes"],
+                    "组数": it["stacks"],
+                    "个数": it["singles"],
+                }
+            )
+
+        if not rows:
+            st.info("没有符合条件的物品。")
+        else:
+            df = pd.DataFrame(rows)
+            st.dataframe(
+                df,
+                hide_index=True,
+                use_container_width=True,
+                height=560,
+                column_config={
+                    "图片": st.column_config.TextColumn(width="small"),
+                    "箱数": st.column_config.NumberColumn(width="small"),
+                    "组数": st.column_config.NumberColumn(width="small"),
+                    "个数": st.column_config.NumberColumn(width="small"),
+                },
+            )
+
+    # 右侧：把统计卡片放在按钮下方
+    with right:
+        items_for_stat = items if items is not None else []
+        total_items = sum(i["total"] for i in items_for_stat)
+        total_kinds = len(items_for_stat)
+        total_boxes = sum(i["boxes"] for i in items_for_stat)
+
+        st.markdown(
+            f'<div class="stat-card"><div class="label">物品种类</div><div class="value">{total_kinds}</div></div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            f'<div class="stat-card"><div class="label">物品总数</div><div class="value">{total_items:,}</div></div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            f'<div class="stat-card"><div class="label">等效满箱</div><div class="value">{total_boxes}</div></div>',
+            unsafe_allow_html=True,
         )
 
-    if not rows:
-        st.info("没有符合条件的物品。")
-        return
 
-    df = pd.DataFrame(rows)
-    st.dataframe(
-        df,
-        hide_index=True,
-        use_container_width=True,
-        height=520,
-        column_config={
-            "图标": st.column_config.TextColumn(width="small"),
-            "数量": st.column_config.NumberColumn(format="%d"),
-            "每组": st.column_config.NumberColumn(width="small"),
-        },
-    )
-
-
-# ----------------- Tab 2: 箱子管理（区域 + 快照）-----------------
-def tab_chests(status: dict, is_online: bool, areas: list[dict]):
-    st.markdown("### 🗺️ 箱子管理")
-    st.caption("管理所有「区域」（如：主仓库、附魔台旁、末影箱区…），并查看每个区域的快照。")
-
-    # ---- 区域 CRUD ----
-    st.markdown("#### 🏷️ 区域管理")
+# ----------------- Tab: 箱子管理 -----------------
+def tab_chests(is_online: bool):
+    areas = fetch_areas()
 
     # 新增区域
     with st.expander("➕ 新增区域", expanded=False):
         with st.form("new_area_form", clear_on_submit=True):
             n1, n2 = st.columns([1, 2])
             new_name = n1.text_input("名称", value="")
-            new_desc = n2.text_input("描述（选填）", value="")
+            new_desc = n2.text_input("描述", value="")
+
+            v1, v2, ext = st.columns(3)
+            new_v1 = v1.text_input("顶点 1（x,y,z）", value="", placeholder="100,64,200")
+            new_v2 = v2.text_input("顶点 2（x,y,z）", value="", placeholder="120,68,220")
+            new_ext = ext.text_input("延伸于", value="", placeholder="例：主仓库")
+
             submit = st.form_submit_button("✅ 建立", type="primary")
             if submit:
                 if not new_name.strip():
                     st.warning("请填入区域名称")
                 else:
                     res = api_post(
-                        "/areas", {"name": new_name.strip(), "description": new_desc.strip() or None}
+                        "/areas",
+                        {
+                            "name": new_name.strip(),
+                            "description": new_desc.strip() or None,
+                            "vertex1": new_v1.strip() or None,
+                            "vertex2": new_v2.strip() or None,
+                            "extendsFrom": new_ext.strip() or None,
+                        },
                     )
                     if res.get("_error"):
                         st.error(res["_error"])
@@ -527,8 +525,10 @@ def tab_chests(status: dict, is_online: bool, areas: list[dict]):
                     "ID": a["id"],
                     "名称": a["name"],
                     "描述": a.get("description") or "",
+                    "顶点1": a.get("vertex1") or "",
+                    "顶点2": a.get("vertex2") or "",
+                    "延伸于": a.get("extendsFrom") or "",
                     "快照数": a.get("snapshotCount", 0),
-                    "建立时间": (a.get("createdAt") or "")[:19].replace("T", " "),
                 }
             )
         df_areas = pd.DataFrame(rows).set_index("ID")
@@ -539,8 +539,10 @@ def tab_chests(status: dict, is_online: bool, areas: list[dict]):
             column_config={
                 "名称": st.column_config.TextColumn(required=True, max_chars=80),
                 "描述": st.column_config.TextColumn(max_chars=300),
+                "顶点1": st.column_config.TextColumn(max_chars=60, help="格式：x,y,z"),
+                "顶点2": st.column_config.TextColumn(max_chars=60, help="格式：x,y,z"),
+                "延伸于": st.column_config.TextColumn(max_chars=80, help="所属上层区域名称"),
                 "快照数": st.column_config.NumberColumn(disabled=True),
-                "建立时间": st.column_config.TextColumn(disabled=True),
             },
             key="areas_editor",
         )
@@ -552,14 +554,22 @@ def tab_chests(status: dict, is_online: bool, areas: list[dict]):
                 orig = next((a for a in areas if a["id"] == area_id), None)
                 if not orig:
                     continue
-                if (row["名称"] != orig["name"]) or (
-                    (row["描述"] or "") != (orig.get("description") or "")
-                ):
+                changed = (
+                    str(row["名称"]) != str(orig["name"] or "")
+                    or str(row["描述"] or "") != str(orig.get("description") or "")
+                    or str(row["顶点1"] or "") != str(orig.get("vertex1") or "")
+                    or str(row["顶点2"] or "") != str(orig.get("vertex2") or "")
+                    or str(row["延伸于"] or "") != str(orig.get("extendsFrom") or "")
+                )
+                if changed:
                     res = api_patch(
                         f"/areas/{area_id}",
                         {
                             "name": str(row["名称"]).strip(),
                             "description": (str(row["描述"]) or "").strip() or None,
+                            "vertex1": (str(row["顶点1"]) or "").strip() or None,
+                            "vertex2": (str(row["顶点2"]) or "").strip() or None,
+                            "extendsFrom": (str(row["延伸于"]) or "").strip() or None,
                         },
                     )
                     if not res.get("_error"):
@@ -587,22 +597,24 @@ def tab_chests(status: dict, is_online: bool, areas: list[dict]):
 
     st.divider()
 
-    # ---- 区域筛选 + 快照列表 ----
-    st.markdown("#### 📜 快照清单（依区域筛选）")
-
-    filter_opts: list[tuple[str, Any]] = [("🌐 全部", "__all__"), ("📁 其他（未分类）", None)]
-    for a in areas:
-        filter_opts.append((f"📦 {a['name']}", a["id"]))
-    filter_labels = [o[0] for o in filter_opts]
-    sel_idx = st.selectbox("筛选区域：", range(len(filter_labels)), format_func=lambda i: filter_labels[i])
-    filter_val = filter_opts[sel_idx][1]
-
+    # 快照清单
     sn_data = api_get("/snapshots")
     if sn_data.get("_error"):
         st.error(sn_data["_error"])
         return
 
     snaps = sn_data.get("snapshots", [])
+    f_opts: list[tuple[str, Any]] = [("🌐 全部", "__all__"), ("📁 其他（未分类）", None)]
+    for a in areas:
+        f_opts.append((f"📦 {a['name']}", a["id"]))
+    f_labels = [o[0] for o in f_opts]
+    sel = st.selectbox(
+        "📜 快照清单（依区域筛选）",
+        range(len(f_labels)),
+        format_func=lambda i: f_labels[i],
+        key="snap_filter",
+    )
+    filter_val = f_opts[sel][1]
     if filter_val != "__all__":
         snaps = [s for s in snaps if s.get("areaId") == filter_val]
 
@@ -625,17 +637,13 @@ def tab_chests(status: dict, is_online: bool, areas: list[dict]):
                 "标签": s["label"],
                 "维度": s.get("dimension") or "",
                 "位置": loc,
-                "备注": s.get("notes") or "",
             }
         )
-    df = pd.DataFrame(rows)
-    st.dataframe(df, hide_index=True, use_container_width=True, height=300)
+    st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True, height=260)
 
-    st.divider()
-    st.markdown("#### 🔍 检视单一快照")
-
+    # 检视单一快照
     snap_id = st.selectbox(
-        "选择快照",
+        "🔍 检视快照",
         options=[s["id"] for s in snaps],
         format_func=lambda i: next(
             f"#{s['id']} | {s['label']} | {s['takenAt'][:19].replace('T', ' ')}"
@@ -644,7 +652,7 @@ def tab_chests(status: dict, is_online: bool, areas: list[dict]):
         ),
     )
 
-    col_a, col_b = st.columns([1, 4])
+    col_a, _ = st.columns([1, 5])
     if col_a.button("🗑️ 删除此快照", type="secondary"):
         res = api_delete(f"/snapshots/{snap_id}")
         if res.get("_error"):
@@ -674,51 +682,45 @@ def tab_chests(status: dict, is_online: bool, areas: list[dict]):
                 b, sk, sg = split_box_stack_single(it["count"], it["stackSize"])
                 crows.append(
                     {
-                        "图标": icon_for(it["itemName"]),
-                        "物品": it["displayName"],
-                        "ID": it["itemName"],
-                        "数量": it["count"],
-                        "箱-组-个": fmt_box_stack_single(b, sk, sg),
-                        "潜影盒": "✓" if it["isShulker"] else "",
+                        "图片": icon_for(it["itemName"]),
+                        "名称": it["displayName"],
+                        "箱数": b,
+                        "组数": sk,
+                        "个数": sg,
                     }
                 )
             st.dataframe(
                 pd.DataFrame(crows),
                 hide_index=True,
                 use_container_width=True,
-                column_config={"图标": st.column_config.TextColumn(width="small")},
+                column_config={"图片": st.column_config.TextColumn(width="small")},
             )
 
 
-# ----------------- Tab 3: 设定（连线设定搬到这里）-----------------
+# ----------------- Tab: 设定 -----------------
 def tab_settings():
-    st.markdown("### ⚙️ 系统设定")
-
     with st.container(border=True):
         st.markdown("#### 🌐 伺服器连线设定")
-        st.caption("以下设定会被左侧栏的【🚀 连线】按钮使用。修改后无需储存，直接按连线即可。")
+        st.caption("以下设定会被左侧栏的【🚀 连线】按钮使用。")
 
         with st.form("server_settings_form"):
-            host = st.text_input(
-                "伺服器位址", value=st.session_state.get("host", "localhost")
-            )
+            host = st.text_input("伺服器位址", value=st.session_state.get("host", "localhost"))
             port = st.number_input(
                 "连接埠",
                 min_value=1,
                 max_value=65535,
                 value=int(st.session_state.get("port", 25565)),
             )
-            username = st.text_input(
-                "机器人名称", value=st.session_state.get("username", "InvBot")
-            )
+            username = st.text_input("机器人名称", value=st.session_state.get("username", "InvBot"))
             version = st.text_input(
-                "游戏版本", value=st.session_state.get("version", ""), placeholder="留空自动侦测"
+                "游戏版本",
+                value=st.session_state.get("version", ""),
+                placeholder="留空自动侦测",
             )
             auth = st.selectbox(
                 "登录方式",
                 ["offline", "microsoft"],
                 index=0 if st.session_state.get("auth", "offline") == "offline" else 1,
-                help="离线服选 offline；正版服选 microsoft（首次登入需在 API 终端机完成验证）",
             )
 
             saved = st.form_submit_button("💾 储存设定", type="primary", use_container_width=True)
@@ -734,20 +736,14 @@ def tab_settings():
                 )
                 st.toast("设定已储存", icon="💾")
 
-    col_left, col_right = st.columns(2)
-    with col_left:
-        with st.container(border=True):
-            st.markdown("#### 🤖 AI 决策（开发中）")
-            st.toggle("启用 AI 自动判断（预留）", value=False, disabled=True)
-            st.text_input("AI API 金钥", value="", type="password", disabled=True)
-            st.caption("将用于整合 LLM 自动判断座标与整理逻辑，目前为预留接口。")
-
-    with col_right:
-        with st.container(border=True):
-            st.markdown("#### 🔌 API 连线资讯")
-            st.code(f"API_BASE = {API_BASE}", language="bash")
-
-    st.divider()
+    with st.container(border=True):
+        st.markdown("#### ⏱️ 自动刷新")
+        auto_refresh = st.toggle(
+            "启用自动刷新（每 3 秒）",
+            value=st.session_state.get("auto_refresh", False),
+            help="机器人在线时持续刷新画面以同步最新状态。",
+        )
+        st.session_state.auto_refresh = auto_refresh
 
     with st.container(border=True):
         st.markdown("#### 📐 数量换算规则")
@@ -755,7 +751,6 @@ def tab_settings():
             """
             - **1 组 (stack)**：物品的最大堆叠（石头 64、末影珍珠 16、剑 1…，由游戏数据自动取值）  
             - **1 箱 (box)**：相当于一个潜影盒大小，固定 **27 组**  
-            - 系统会以 `数量 = X 箱 + Y 组 + Z 个` 的形式自动换算  
             """
         )
 
@@ -764,18 +759,40 @@ def tab_settings():
         st.markdown(
             """
             - 扫描时若侦测到潜影盒，会**自动展开**读取其内容并存入数据库  
-            - 在「仓库总览」聚合时会**只算内容物**，避免重复计算潜影盒本身  
-            - 容器路径会以 `主背包 → 紫色潜影盒#14` 之类的方式标示  
+            - 在「仓库总览」聚合时**只算内容物**，避免重复计算潜影盒本身  
             """
         )
 
+    with st.container(border=True):
+        st.markdown("#### 🔌 API")
+        st.code(f"API_BASE = {API_BASE}", language="bash")
 
-# ----------------- Tab 4: 日志 -----------------
+
+# ----------------- Tab: 其他（指令） -----------------
+def tab_misc(is_online: bool):
+    with st.container(border=True):
+        st.markdown("#### 💬 指令")
+        st.caption("送出聊天讯息或斜线指令到伺服器。")
+        with st.form("cmd_form", clear_on_submit=True):
+            msg = st.text_input(
+                "讯息 / 指令",
+                placeholder="例：/home 或 你好",
+                label_visibility="collapsed",
+            )
+            sent = st.form_submit_button(
+                "📨 送出", type="primary", use_container_width=True, disabled=not is_online
+            )
+            if sent and msg.strip():
+                res = api_post("/bot/chat", {"message": msg.strip()})
+                if res.get("_error"):
+                    st.error(res["_error"])
+                else:
+                    st.toast("讯息已送出", icon="📨")
+
+
+# ----------------- Tab: 日志 -----------------
 def tab_logs():
-    st.markdown("### 📊 系统日志")
-    st.caption("最近 200 条事件（机器人状态变化、聊天讯息、扫描结果、错误）")
-
-    cc1, cc2 = st.columns([1, 5])
+    cc1, _ = st.columns([1, 5])
     if cc1.button("🗑️ 清空日志", use_container_width=True):
         api_delete("/bot/logs")
         st.rerun()
@@ -798,13 +815,12 @@ def tab_logs():
         lines.append(f"[{ts}] {emo} {e['message']}")
 
     log_text = "\n".join(lines)
-    with st.container(border=True, height=480):
+    with st.container(border=True, height=500):
         st.code(log_text, language="bash")
 
 
 # ----------------- Main -----------------
 def main():
-    # session_state 默认值
     st.session_state.setdefault("host", "localhost")
     st.session_state.setdefault("port", 25565)
     st.session_state.setdefault("username", "InvBot")
@@ -817,18 +833,17 @@ def main():
         st.stop()
 
     is_online = render_sidebar(status)
-    areas = fetch_areas()
 
-    st.title("🤖 AI-Bot Minecraft 库存控制台")
-
-    tabs = st.tabs(["📦 仓库", "🗺️ 箱子管理", "⚙️ 设定", "📊 日志"])
+    tabs = st.tabs(["📦 仓库", "🗺️ 箱子管理", "⚙️ 设定", "🧰 其他", "📊 日志"])
     with tabs[0]:
-        tab_inventory(status, is_online, areas)
+        tab_inventory(is_online)
     with tabs[1]:
-        tab_chests(status, is_online, areas)
+        tab_chests(is_online)
     with tabs[2]:
         tab_settings()
     with tabs[3]:
+        tab_misc(is_online)
+    with tabs[4]:
         tab_logs()
 
     if st.session_state.get("auto_refresh") and is_online:

@@ -10,6 +10,9 @@ const AreaSchema = z.object({
   name: z.string().min(1).max(80),
   description: z.string().max(300).optional().nullable(),
   color: z.string().max(20).optional().nullable(),
+  vertex1: z.string().max(60).optional().nullable(),
+  vertex2: z.string().max(60).optional().nullable(),
+  extendsFrom: z.string().max(80).optional().nullable(),
 });
 
 router.get("/areas", async (_req, res) => {
@@ -19,6 +22,9 @@ router.get("/areas", async (_req, res) => {
       a.name,
       a.description,
       a.color,
+      a.vertex1,
+      a.vertex2,
+      a.extends_from,
       a.created_at,
       COUNT(s.id)::int AS snapshot_count
     FROM chest_areas a
@@ -32,6 +38,9 @@ router.get("/areas", async (_req, res) => {
       name: r.name,
       description: r.description,
       color: r.color,
+      vertex1: r.vertex1,
+      vertex2: r.vertex2,
+      extendsFrom: r.extends_from,
       createdAt: r.created_at,
       snapshotCount: Number(r.snapshot_count) || 0,
     })),
@@ -50,6 +59,9 @@ router.post("/areas", async (req, res) => {
       name: parsed.data.name,
       description: parsed.data.description ?? null,
       color: parsed.data.color ?? null,
+      vertex1: parsed.data.vertex1 ?? null,
+      vertex2: parsed.data.vertex2 ?? null,
+      extendsFrom: parsed.data.extendsFrom ?? null,
     })
     .returning();
   logEvent("system", `新增区域：${row.name} (#${row.id})`);
@@ -73,6 +85,9 @@ router.patch("/areas/:id", async (req, res) => {
       name: parsed.data.name ?? undefined,
       description: parsed.data.description ?? undefined,
       color: parsed.data.color ?? undefined,
+      vertex1: parsed.data.vertex1 ?? undefined,
+      vertex2: parsed.data.vertex2 ?? undefined,
+      extendsFrom: parsed.data.extendsFrom ?? undefined,
     })
     .where(eq(chestAreas.id, id))
     .returning();

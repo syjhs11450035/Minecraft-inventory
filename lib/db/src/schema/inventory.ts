@@ -12,6 +12,9 @@ export const chestAreas = pgTable("chest_areas", {
   name: text("name").notNull(),
   description: text("description"),
   color: text("color"),
+  vertex1: text("vertex1"),
+  vertex2: text("vertex2"),
+  extendsFrom: text("extends_from"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
