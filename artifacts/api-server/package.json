@@ -16,8 +16,13 @@
     "cors": "^2",
     "drizzle-orm": "catalog:",
     "express": "^5",
+    "minecraft-data": "^3.109.0",
+    "mineflayer": "^4.37.0",
     "pino": "^9",
-    "pino-http": "^10"
+    "pino-http": "^10",
+    "prismarine-item": "^1.18.0",
+    "prismarine-nbt": "^2.8.0",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
