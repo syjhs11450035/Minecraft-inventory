@@ -23,19 +23,9 @@
 
 ## 🏗️ 架构总览
 
-```
-┌──────────────────────┐  HTTP   ┌──────────────────────┐  mineflayer  ┌──────────────┐
-│  Streamlit UI (PY)   │ ──────▶ │  Express API (TS)    │ ───────────▶ │  Minecraft   │
-│  /main/ui/*          │         │  /artifacts/api-     │              │  Server      │
-│                      │         │  server/src/*        │              │              │
-└──────────────────────┘         └────────┬─────────────┘              └──────────────┘
-                                          │
-                                          ▼
-                                  ┌──────────────┐
-                                  │  PostgreSQL  │
-                                  │  (drizzle)   │
-                                  └──────────────┘
-```
+<p align="center">
+  <img src="docs/architecture.svg" alt="架构图" width="100%">
+</p>
 
 详细分层、资料流、表 schema 请见 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)。
 
@@ -120,8 +110,13 @@ streamlit run main.py
 
 ## 📐 核心概念：箱 - 组 - 个
 
+<p align="center">
+  <img src="docs/box-stack-math.svg" alt="箱-组-个 换算" width="100%">
+</p>
+
 | 单位 | 定义 |
 |----|------|
+| **1 个** | 最小单位 — 一颗物品 |
 | **1 组 (stack)** | 物品的最大堆叠数。石头 = 64、末影珍珠 = 16、剑 = 1，由 minecraft-data 自动取得 |
 | **1 箱 (box)** | 固定 = **27 组**（一个潜影盒大小） |
 

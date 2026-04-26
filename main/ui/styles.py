@@ -21,7 +21,9 @@ _CSS = """
     }
     .stat-card .label { font-size: 0.8rem; opacity: 0.85; }
     .stat-card .value { font-size: 1.6rem; font-weight: 700; margin-top: 4px;}
-    .block-container { padding-top: 1.2rem; }
+    .block-container { padding-top: 3.5rem; }
+    div[data-testid="stTabs"] { margin-top: 0.5rem; }
+    button[data-baseweb="tab"] { font-size: 1rem !important; padding: 10px 18px !important; }
 </style>
 """
 

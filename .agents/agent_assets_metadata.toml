@@ -1,0 +1,14 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "GEZPpQgXdoAr5Yz4BkxOM"
+uri = "file://docs/architecture.svg"
+type = "image"
+title = "架构图"
+
+[[outputs]]
+id = "6170UZwHIoNYk5qC5vW7E"
+uri = "file://docs/box-stack-math.svg"
+type = "image"
+title = "箱-组-个 换算图"
