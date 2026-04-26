@@ -10,10 +10,17 @@ Minecraft AI bot inventory manager. A mineflayer-based bot connects to a Minecra
 
 ## Architecture
 
-- **`artifacts/api-server`** — Express 5 + mineflayer backend. Manages a single bot instance, exposes REST endpoints under `/api/bot/...` and `/api/snapshots/...`. Future-ready for multi-bot expansion.
-- **`artifacts/inventory-ui`** — Python Streamlit frontend served at `/`. Talks to the API via `http://localhost:80/api`.
-- **`lib/db`** — Drizzle schema for `container_snapshots` and `snapshot_items`.
-- **`lib/api-zod`, `lib/api-spec`, `lib/api-client-react`** — present from scaffold; not yet wired (the Streamlit client uses raw `requests`).
+- **`/main/`** — ★ All first-party Python code lives here, organised by user preference.
+  - `main/main.py` — entry: page config, sidebar, 5 tabs router
+  - `main/ui/{api,icons,format,styles,sidebar,dialogs}.py` — shared UI helpers
+  - `main/ui/tabs/{inventory,chests,settings,misc,logs}.py` — one file per tab
+  - `main/js/README.md` — pointer doc (real JS is in `artifacts/api-server/src/`, can't move due to pnpm workspace)
+- **`/main.py`** (root) — thin shim: adds project root to sys.path → `main.main.run()`. Lets you run `streamlit run main.py` from project root.
+- **`artifacts/api-server`** — Express 5 + mineflayer backend. Routes split: `bot.ts`, `snapshots.ts`, `areas.ts`, `health.ts`. Lib: `bot.ts`, `inventory.ts`, `event-log.ts`.
+- **`artifacts/inventory-ui/app.py`** — thin shim required by Replit workflow binding. Just `from main.main import run; run()` after sys.path fix.
+- **`lib/db`** — Drizzle schema for `chest_areas`, `container_snapshots`, `snapshot_items`, `bot_state`.
+- **`docs/`** — ARCHITECTURE.md / PROGRESS.md / API.md (for GitHub readers).
+- **`README.md`** + **`LICENSE`** (CC BY-NC-ND 4.0) at root for GitHub presentation.
 
 ## Stack
 
@@ -25,16 +32,13 @@ Minecraft AI bot inventory manager. A mineflayer-based bot connects to a Minecra
 
 ## Key API endpoints
 
-- `GET  /api/bot/status` — connection state
-- `POST /api/bot/connect` — `{host, port, username, version?, auth?}`
-- `POST /api/bot/disconnect`
-- `POST /api/bot/chat` — `{message}`
-- `GET  /api/bot/nearby-chest?range=6`
-- `GET  /api/bot/inventory-preview` — current inventory (no save)
-- `POST /api/snapshots/inventory` — snapshot bot inventory + nested shulker contents
-- `POST /api/snapshots/chest` — open nearest container, snapshot contents (incl. shulker contents)
-- `GET  /api/snapshots`, `GET /api/snapshots/:id`, `DELETE /api/snapshots/:id`
-- `GET  /api/inventory/aggregate` — totals per item across the latest snapshot of each location, returned with `boxes / stacks / singles` breakdown
+See `docs/API.md` for the full reference. Quick summary:
+
+- `GET  /api/bot/status`, `POST /api/bot/connect|disconnect|chat`, `GET|DELETE /api/bot/logs`
+- `POST /api/snapshots/inventory|chest` (both accept `{label, areaId}`)
+- `GET  /api/snapshots`, `GET|DELETE /api/snapshots/:id`
+- `GET  /api/inventory/aggregate` — boxes / stacks / singles
+- `GET|POST|PATCH|DELETE /api/areas` — chest area CRUD with `name, description, vertex1, vertex2, extendsFrom`
 
 ## Box / Stack / Single math
 
