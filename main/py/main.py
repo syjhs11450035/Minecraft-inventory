@@ -6,14 +6,14 @@ import time
 
 import streamlit as st
 
-from main.ui.api import api_get
-from main.ui.sidebar import render_sidebar
-from main.ui.styles import apply_styles
-from main.ui.tabs.chests import tab_chests
-from main.ui.tabs.inventory import tab_inventory
-from main.ui.tabs.logs import tab_logs
-from main.ui.tabs.misc import tab_misc
-from main.ui.tabs.settings import tab_settings
+from main.py.ui.api import api_get
+from main.py.ui.sidebar import render_sidebar
+from main.py.ui.styles import apply_styles
+from main.py.ui.tabs.chests import tab_chests
+from main.py.ui.tabs.inventory import tab_inventory
+from main.py.ui.tabs.logs import tab_logs
+from main.py.ui.tabs.misc import tab_misc
+from main.py.ui.tabs.settings import tab_settings
 
 
 def _set_page_config_once() -> None:

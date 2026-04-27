@@ -6,7 +6,7 @@ import time
 
 import streamlit as st
 
-from main.ui.api import api_post, area_select_options, fetch_areas
+from main.py.ui.api import api_post, area_select_options, fetch_areas
 
 
 @st.dialog("📦 扫描背包 — 选择存放区域")

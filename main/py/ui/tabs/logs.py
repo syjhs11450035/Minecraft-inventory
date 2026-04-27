@@ -6,7 +6,7 @@ from datetime import datetime
 
 import streamlit as st
 
-from main.ui.api import api_delete, api_get
+from main.py.ui.api import api_delete, api_get
 
 
 def tab_logs() -> None:

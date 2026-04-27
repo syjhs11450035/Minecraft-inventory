@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import streamlit as st
 
-from main.ui.api import api_post
-from main.ui.format import status_pill
+from main.py.ui.api import api_post
+from main.py.ui.format import status_pill
 
 
 def render_sidebar(status: dict) -> bool:

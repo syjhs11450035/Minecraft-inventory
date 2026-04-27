@@ -7,9 +7,9 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 
-from main.ui.api import api_get, fetch_areas
-from main.ui.dialogs import dialog_scan_chest, dialog_scan_inventory
-from main.ui.icons import icon_for
+from main.py.ui.api import api_get, fetch_areas
+from main.py.ui.dialogs import dialog_scan_chest, dialog_scan_inventory
+from main.py.ui.icons import icon_for
 
 
 def tab_inventory(is_online: bool) -> None:

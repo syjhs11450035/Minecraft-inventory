@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from main.ui.api import api_post
+from main.py.ui.api import api_post
 
 
 def tab_misc(is_online: bool) -> None:

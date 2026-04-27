@@ -1,4 +1,4 @@
-export type EventLevel = "info" | "warn" | "error" | "chat" | "system";
+export type EventLevel = "info" | "warn" | "error" | "chat" | "system" | "ai";
 
 export interface EventEntry {
   ts: number;

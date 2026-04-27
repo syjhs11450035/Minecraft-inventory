@@ -7,9 +7,9 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 
-from main.ui.api import api_delete, api_get, api_patch, api_post, fetch_areas
-from main.ui.format import fmt_box_stack_single, split_box_stack_single
-from main.ui.icons import icon_for
+from main.py.ui.api import api_delete, api_get, api_patch, api_post, fetch_areas
+from main.py.ui.format import fmt_box_stack_single, split_box_stack_single
+from main.py.ui.icons import icon_for
 
 
 def _area_form_new() -> None:
@@ -226,8 +226,71 @@ def _snapshot_detail(snaps: list[dict]) -> None:
             )
 
 
+def _chest_preview_panel(is_online: bool) -> None:
+    """🔍 箱子预览：直接由 server 取得内容（不开 GUI、不入库）。"""
+    with st.container(border=True):
+        st.markdown("#### 🔍 箱子预览")
+        st.caption(
+            "向伺服器查询箱子内容（优先使用 `/data get block`，需要 OP；"
+            "否则会暂时开启容器但**不**写入资料库）。"
+        )
+        c1, c2, c3, c4 = st.columns([1, 1, 1, 1])
+        x = c1.text_input("X", key="chest_preview_x", placeholder="留空＝就近搜寻")
+        y = c2.text_input("Y", key="chest_preview_y")
+        z = c3.text_input("Z", key="chest_preview_z")
+        rng = c4.number_input("搜寻半径", 1, 32, value=6, key="chest_preview_range")
+
+        if st.button("🔍 预览箱子内容", type="primary", disabled=not is_online):
+            payload: dict[str, Any] = {"range": int(rng)}
+            try:
+                if x.strip() and y.strip() and z.strip():
+                    payload["x"] = int(x)
+                    payload["y"] = int(y)
+                    payload["z"] = int(z)
+            except ValueError:
+                st.error("座标必须是整数")
+                return
+            res = api_post("/chest/preview", payload)
+            if res.get("_error"):
+                st.error(res["_error"])
+                return
+            target = res.get("target") or {}
+            via = res.get("via")
+            via_label = "/data get block" if via == "data-get" else "暂开容器"
+            st.success(
+                f"✅ 已预览 {target.get('name', '容器')} "
+                f"@ ({target.get('x')},{target.get('y')},{target.get('z')}) — 方式：{via_label}"
+            )
+            items = res.get("items", [])
+            if not items:
+                st.info("此箱子目前是空的。")
+                return
+            crows = []
+            for it in items:
+                b, sk, sg = split_box_stack_single(it["count"], it["stackSize"])
+                crows.append(
+                    {
+                        "图片": icon_for(it["itemName"]),
+                        "名称": it["displayName"],
+                        "总数": it["count"],
+                        "箱": b,
+                        "组": sk,
+                        "个": sg,
+                    }
+                )
+            st.dataframe(
+                pd.DataFrame(crows),
+                hide_index=True,
+                use_container_width=True,
+                column_config={"图片": st.column_config.TextColumn(width="small")},
+            )
+
+
 def tab_chests(is_online: bool) -> None:
     areas = fetch_areas()
+
+    _chest_preview_panel(is_online)
+    st.divider()
 
     _area_form_new()
     if not areas:

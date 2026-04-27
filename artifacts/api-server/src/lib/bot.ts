@@ -1,6 +1,7 @@
 import mineflayer from "mineflayer";
 import { logger } from "./logger";
 import { logEvent } from "./event-log";
+import { tryHandleAIMessage } from "./ai";
 
 export type BotStatus =
   | "disconnected"
@@ -111,6 +112,11 @@ export async function connectBot(cfg: BotConfig): Promise<void> {
       bot.on("messagestr", (message: string) => {
         const text = String(message || "").slice(0, 500);
         if (text.trim()) logEvent("chat", text);
+        try {
+          tryHandleAIMessage(bot, text);
+        } catch {
+          // ignore AI dispatch errors
+        }
       });
 
       bot.on("health", () => {
