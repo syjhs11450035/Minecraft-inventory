@@ -65,6 +65,18 @@ def fetch_areas() -> list[dict]:
     return data.get("areas", [])
 
 
+# ---- 设定（持久化在后台 JSON 档） ----
+def fetch_settings() -> dict:
+    data = api_get("/settings")
+    if data.get("_error"):
+        return {}
+    return data
+
+
+def update_settings(patch: dict) -> dict:
+    return api_patch("/settings", patch)
+
+
 def area_select_options(areas: list[dict]) -> list[tuple[str, int | None]]:
     """返回 [(显示名, area_id 或 None)]，含「其他 / 未分类」选项。"""
     opts: list[tuple[str, int | None]] = [("📁 其他（未分类）", None)]

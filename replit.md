@@ -46,7 +46,8 @@ See `docs/API.md` for the full reference. Summary:
 - `GET  /api/snapshots`, `GET|DELETE /api/snapshots/:id`
 - `GET  /api/inventory/aggregate`
 - `GET|POST|PATCH|DELETE /api/areas`
-- `GET|PATCH /api/settings` — runtime config (currently AI block: `enabled, model, systemPrompt, replyInChat`)
+- `GET|PATCH /api/settings` — **persistent settings** (deep-merge PATCH). Stored in `data/settings.json` at workspace root. Blocks: `connection {host,port,username,version,auth}`, `ai {enabled,model,systemPrompt,replyInChat}`, `htmlServer {enabled,port}`, `ui {autoRefresh}`
+- `GET /api/settings/file`, `POST /api/settings/reload` — settings file path / reload from disk
 - `GET|DELETE /api/ai/history` — sliding-window AI chat history (in memory, max 12)
 
 ## AI handler (`ai!` prefix)
