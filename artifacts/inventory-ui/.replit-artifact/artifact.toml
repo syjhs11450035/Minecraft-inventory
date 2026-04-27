@@ -1,18 +1,17 @@
 kind = "design"
-  previewPath = "/"
-  title = "Inventory Manager"
-  version = "1.0.0"
-  id = "inv-mgr-streamlit-001x"
+previewPath = "/"
+title = "庫存管理"
+version = "1.0.0"
+id = "inv-mgr-streamlit-001x"
 
-  [[services]]
-  localPort = 5000
-  name = "Streamlit UI"
-  paths = ["/"]
+[[services]]
+localPort = 5000
+name = "Streamlit UI"
+paths = ["/"]
 
-  [services.env]
-  PORT = "5000"
-  API_BASE = "http://localhost:80/api"
+[services.env]
+PORT = "5000"
+API_BASE = "http://localhost:80/api"
 
-  [services.development]
-  run = "streamlit run app.py --server.port 5000 --server.address 0.0.0.0 --server.headless true --server.enableCORS false --server.enableXsrfProtection false"
-  
+[services.development]
+run = "cd /home/runner/workspace && uv run streamlit run main.py --server.port 5000 --server.address 0.0.0.0 --server.headless true --server.enableCORS false --server.enableXsrfProtection false"
